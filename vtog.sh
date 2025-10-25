@@ -42,7 +42,7 @@ done
 wait
 
 frames_per_gif=32
-subgifs_amount=$(((frames_count / frames_per_gif) + 1))
+subgifs_amount=$((frames_count / frames_per_gif))
 
 for i in $(seq 0 $subgifs_amount)
 do
@@ -60,4 +60,4 @@ cleanup() {
   pkill -P $$
 }
  
-trap cleanup EXIT SIGINT SIGTERM
+trap cleanup SIGINT SIGTERM
