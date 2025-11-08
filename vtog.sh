@@ -14,7 +14,7 @@ source ../bash-logger/bash_logger.sh
 CSBL_SEVERITY_LEVEL=$CSBL_DEBUG
 CSBL_LOG_TO_FILE='false'
 
-for c in docker ffmpeg magick rm mkdir wc ls sed sort find echo; do
+for c in ffmpeg magick rm mkdir wc ls sed sort find echo; do
   if [[ -z "$(which $c)" ]]; then
     csbl_log_crit "Command=[$c] not installed, impossible to use script."
     exit 1
