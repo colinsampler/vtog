@@ -1,18 +1,26 @@
 #!/bin/bash
 
+VTOG_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${VTOG_ROOT}/bash-logger/bash_logger.sh"
+CSBL_SEVERITY_LEVEL=$CSBL_DEBUG
+CSBL_LOG_TO_FILE='false'
+source "${VTOG_ROOT}/help.sh"
+
+if [[ $# -le 0 ]]; then
+  print_help
+  exit 1
+fi
+
 start=$SECONDS
 
 function cleanup() {
   csbl_log_warn "Cleaning up..."
   pkill -P $$
+  wait
   exit 1
 }
 
 trap cleanup SIGINT SIGTERM
-
-source ../bash-logger/bash_logger.sh
-CSBL_SEVERITY_LEVEL=$CSBL_DEBUG
-CSBL_LOG_TO_FILE='false'
 
 for c in ffmpeg magick rm mkdir wc ls sed sort find echo; do
   if [[ -z "$(which $c)" ]]; then
@@ -27,28 +35,33 @@ o=res.gif
 fps=4
 w=
 h=
-quality=65-80
+quality=
 maxthreads=32
 help=
 
 for a in "$@"; do
-  charset='[A-Za-z0-9./_-]+'
+  charset="[A-Za-z0-9./'\"_-]*"
   if [[ -n "$(echo "$a" | grep -E "^\-{1,2}($charset)(=$charset)?$")" ]]; then
     eval "$(echo "$a" | sed -E 's#^\-{1,2}##' | sed -E 's#^([^=]+)$#\1=1#')"
   fi
 done
 
-input=${input:=$i}
-output=${output:=$o}
-width=${width:=$w}
-height=${height:=$h}
+input=${input:-$i}
+output=${output:-$o}
+width=${width:-$w}
+height=${height:-$h}
 
-if [[ $help -eq 1 ]] || [[ -z "$input" ]] ; then
-  source ./help.sh
+if [[ $help -eq 1 ]] || [[ -z "$input" ]]; then
   print_help
+  exit 0
 fi
 
-for v in input ws output fps quality maxthreads; do
+if [[ ! -f "$input" ]]; then
+  csbl_log_crit "Input file=[$input] does not exists, nothing to do, exiting."
+  exit 1
+fi
+
+for v in input ws output fps maxthreads; do
   if [[ -z "${!v}" ]]; then
     csbl_log_crit "Variable=[$v] cannot have empty value, did you override it's value?"
     exit 1
@@ -66,6 +79,11 @@ ffmpeg -i "$input" -vf "fps=$fps" "$ws/%06d.png" >/dev/null 2>&1
 ordered_frames=($(ls $ws | sort -t'.' -k 1 -n | sed -E "s/(.*)/$ws\/\1/"))
 frames_count="${#ordered_frames[@]}"
 first_frame_filename="${ordered_frames[0]}"
+
+if [[ $frames_count -lt 1 ]]; then
+  csbl_log_crit "No frames found. Nothing extracted from file input=[$input], nothing to do, exiting."
+  exit 1
+fi
 
 csbl_log_success "Frames ready. ${frames_count} frames prepared."
 
@@ -91,14 +109,16 @@ function process_frame {
   magick -size "${frame_width}x10" xc:none -fill red -draw "rectangle 0,0 $progbar_width,10" "$frame_filepath.bar.png"
   magick "$frame_filepath" -gravity north -background none -extent "${frame_width}x$((frame_height+10))" "$frame_filepath.tmp.png"
   composite -geometry +0+$frame_height "$frame_filepath.bar.png" "$frame_filepath.tmp.png" "$frame_filepath"
-  pngquant --quality=65-80 --output "$frame_filepath.q.png" "$frame_filepath"
-  mv "$frame_filepath.q.png" "$frame_filepath"
+  if [[ -n "$quality" ]]; then
+    pngquant --quality=$quality --output "$frame_filepath.q.png" "$frame_filepath"
+    mv "$frame_filepath.q.png" "$frame_filepath"
+  fi
   rm "$frame_filepath.bar.png" "$frame_filepath.tmp.png"
 }
 
 thread_no=0
 for frame_filepath in "${ordered_frames[@]}"; do
-  csbl_log_debug "Frames with filepath=[$frame_filepath] is being processed wihin thread_no=[$thread_no]."
+  csbl_log_debug "Frames with filepath=[$frame_filepath] is being processed within thread_no=[$thread_no]."
   process_frame "$frame_filepath" &
   thread_no=$((thread_no + 1))
   if [[ $thread_no -eq $maxthreads ]]; then thread_no=0; wait; fi

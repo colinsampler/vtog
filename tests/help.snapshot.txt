@@ -1,0 +1,29 @@
+vtog.sh script usage
+  [1m--input[0m, [1m-i[0m 
+    path to video file, mandatory
+
+  [1m--output[0m, [1m-o[0m
+    output filename, cannot be path for now, optional, default res.gif
+
+  [1m--ws[0m                      
+    workspace, optional, default frames
+
+  [1m--fps[0m
+    determines how many frames per second to take from every video second, optional, default 4
+
+  [1m--width[0m, [1m-w[0m
+    resize frame to provided width, default no value
+
+  [1m--height[0m, [1m-h[0m
+    resize frame to provided width, default no value
+    (?) if none of width, height passed, no resize takes place
+
+  [1m--quality[0m
+    frame percentage quality range, default 65-80
+
+  [1m--maxthreads[0m
+    maximum of threads to use while processing final GIF frames
+
+    Examples:
+    (...)
+    
