@@ -38,6 +38,7 @@ h=
 quality=
 maxthreads=32
 help=
+autocleanup='true'
 
 for a in "$@"; do
   charset="[A-Za-z0-9./'\"_-]*"
@@ -106,14 +107,14 @@ function process_frame {
     magick "$frame_filepath" -resize ${width}x${height} "$frame_filepath.r.png"
     mv "$frame_filepath.r.png" "$frame_filepath"
   fi
-  magick -size "${frame_width}x10" xc:none -fill red -draw "rectangle 0,0 $progbar_width,10" "$frame_filepath.bar.png"
-  magick "$frame_filepath" -gravity north -background none -extent "${frame_width}x$((frame_height+10))" "$frame_filepath.tmp.png"
-  composite -geometry +0+$frame_height "$frame_filepath.bar.png" "$frame_filepath.tmp.png" "$frame_filepath"
+  magick "$frame_filepath" -alpha set "$frame_filepath"
+  magick -size "${frame_width}x10" xc:none -alpha set -fill red -draw "rectangle 0,0 $progbar_width,10" "$frame_filepath.bar.png"
+  magick "$frame_filepath" "$frame_filepath.bar.png" -append "$frame_filepath"
   if [[ -n "$quality" ]]; then
     pngquant --quality=$quality --output "$frame_filepath.q.png" "$frame_filepath"
     mv "$frame_filepath.q.png" "$frame_filepath"
   fi
-  rm "$frame_filepath.bar.png" "$frame_filepath.tmp.png"
+  rm "$frame_filepath.bar.png"
 }
 
 thread_no=0
@@ -127,6 +128,9 @@ wait
 
 frames_per_gif=32
 subgifs_amount=$((frames_count / frames_per_gif))
+if [[ $((frames_count % frames_per_gif)) -eq 0 ]]; then
+  subgifs_amount=$((subgifs_amount - 1))
+fi
 
 for j in $(seq 0 $subgifs_amount)
 do
@@ -143,6 +147,8 @@ magick $ws/*.gif "$output"
 csbl_log_info "Joined into [$output]."
 
 csbl_log_success "Workspace directory=[${ws}] cleaned again after job done."
-rm -rf $ws
+if [[ "$autocleanup" == 'true' ]]; then
+  rm -rf $ws
+fi
 
 csbl_log_info "Script took [$((SECONDS - s))] seconds."

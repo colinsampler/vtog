@@ -66,15 +66,25 @@ function test_when_maxthreads_empty_then_exit_with_error() {
 
 # Tests for results in general
 
-function test_when_input_processed_then_first_frame_should_exists_and_match_hash() {
-  vtog.sh --input=./test.mov --maxthreads='32' 2>&1
-  first_frame_path="frames/$(ls -1 frames | head -n 1)"
-  echo "FFP=[$first_frame_path]"
-  actual_hash="$(sha512sum "$first_frame_path")"
-  expected="$(cat ./test_frame_1024x768.sha.txt)"
+function test_when_input_processed_then_first_frame_should_exists_and_match_hash_original_variant() {
+  vtog.sh --input=./test.mov --maxthreads='32' --autocleanup=false >/dev/null 2>&1
+  first_frame_path="$(ls -1 frames/*.png | head -n 1)"
+  magick $first_frame_path -strip $first_frame_path
+  actual_hash="$(sha512sum "$first_frame_path" | awk '{ print $1 }')"
+  expected="$(cat ./test_frame_1024x778.sha.txt)"
   assertEquals "$expected" "$actual_hash"
+  rm -rf frames
 }
 
+function test_when_input_processed_then_first_frame_should_exists_and_match_hash_small_variant() {
+  vtog.sh --input=./test.mov --width=640 --maxthreads='32' --autocleanup=false >/dev/null 2>&1
+  first_frame_path="$(ls -1 frames/*.png | head -n 1)"
+  magick $first_frame_path -strip $first_frame_path
+  actual_hash="$(sha512sum "$first_frame_path" | awk '{ print $1 }')"
+  expected="$(cat ./test_frame_640x490.sha.txt)"
+  assertEquals "$expected" "$actual_hash"
+  rm -rf frames
+}
 
 # Tests for sending signals to main script
 
