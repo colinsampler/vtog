@@ -62,7 +62,7 @@ if [[ ! -f "$input" ]]; then
   exit 1
 fi
 
-for v in input ws output fps maxthreads; do
+for v in ws output fps maxthreads; do
   if [[ -z "${!v}" ]]; then
     csbl_log_crit "Variable=[$v] cannot have empty value, did you override it's value?"
     exit 1
