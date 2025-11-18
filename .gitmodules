@@ -1,0 +1,6 @@
+[submodule "shunit2"]
+	path = shunit2
+	url = https://github.com/kward/shunit2.git
+[submodule "bash-logger"]
+	path = bash-logger
+	url = https://github.com/colinsampler/bash-logger.git
