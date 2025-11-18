@@ -58,7 +58,7 @@ if [[ $help -eq 1 ]] || [[ -z "$input" ]]; then
 fi
 
 if [[ ! -f "$input" ]]; then
-  csbl_log_crit "Input file=[$input] does not exists, nothing to do, exiting."
+  csbl_log_crit "Input file=[$input] does not exist, nothing to do, exiting."
   exit 1
 fi
 
