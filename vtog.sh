@@ -134,7 +134,7 @@ fi
 
 for j in $(seq 0 $subgifs_amount)
 do
-  magick -delay 25 -loop 0 $(echo "${ordered_frames[@]:$(($frames_per_gif * j)):$(($frames_per_gif))}") "$ws/$j.gif" &
+  magick -delay 25 -loop 0 $(echo "${ordered_frames[@]:$(($frames_per_gif * j)):$(($frames_per_gif))}") "$ws/$(printf "%06d\n" "$j").gif" &
   csbl_log_debug "SubGIF with path=[$ws/$j.gif] created from [$frames_per_gif] frames."
   thread_no=$((thread_no + 1))
   if [[ $thread_no -eq $maxthreads ]]; then thread_no=0; wait; fi
